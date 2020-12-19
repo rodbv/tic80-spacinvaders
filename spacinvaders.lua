@@ -11,9 +11,11 @@ function coll(o1, o2)
 end
 
 sounds = {
-	enabled = true,
-	toggle = function(self)
-		self.enabled = not self.enabled
+	enabled = false,
+  toggle = function(self)
+    if btnp(5) then
+      self.enabled = not self.enabled
+    end
 	end,
 	play = function(self,s)
 		if not self.enabled then return end
@@ -24,7 +26,16 @@ sounds = {
 		elseif s == 'hit' then
 				sfx(0,'D-5',20,1,10)
 		end
-	end,
+  end,
+  draw = function(self)
+    local sprite
+    if self.enabled then
+      sprite = 368
+    else
+      sprite = 369
+    end
+    spr(sprite, 0, 0)
+  end
 }
 
 game = {
@@ -178,7 +189,9 @@ function TIC()
 		game:press()
 	 return
 	end
-	
+
+  sounds:toggle()
+  sounds:draw()
 	game:tic()
 	ship:move()
 	ship:draw()
@@ -200,6 +213,8 @@ end
 -- 006:000330000003b000000b30000003b000000b30000003b000000b30000003b000
 -- 007:0002200000022000000220000002200000022000000220000002200000022000
 -- 008:0004400000044000000440000004400000044000000440000004400000044000
+-- 112:00000000000b0c0000bb00c0bbbbc0c0aabbc0c000ab00c0000a0c0000000000
+-- 113:00000000000d000000dd0000ddddf000eeddf00000ed0000000e000000000000
 -- </SPRITES>
 
 -- <WAVES>
