@@ -11,7 +11,9 @@ function coll(o1, o2)
 end
 
 game = {
-	points = 0,
+	sc = 0,
+	hisc = 0,
+	bonus = 0, -- how many aliens were hit in sequence
  	started = false,
 	res_x = 240,
 	lifes = 5,
@@ -20,7 +22,7 @@ game = {
 	tics = 0,
 	last_shot = math.huge,
 	press = function(self)
-		if btn(4) then
+		if btnp() > 0 then
 			self.started = true
 			self:init()
 		end
@@ -72,44 +74,46 @@ game = {
 	hit = function(self, a)
 		sounds:play('hit')
 		a.alive = false
-		self.points = self.points + 10
+		aliens.kills = aliens.kills + 1
+		self.sc = self.sc + 10 + self.bonus
+		if self.bonus < 10 then self.bonus = self.bonus + 1 end
+		if self.sc > self.hisc then
+			self.hisc = self.sc
+		end
+		if aliens.kills == 36 then
+			aliens:reset()
+		end
 	end,
 	score = function(self)
-		print('Score: '..tostring(self.points), self.res_x - 40, 1, 10, 1, 1, true)
+		local y = game.res_y - 5
+		print('Score '..tostring(self.sc), self.res_x - 80, y, 10, 1, 1, true)
+		print('Hi '..tostring(self.hisc), self.res_x - 30, y, 11, 1, 1, true)
 	end,
 	check_hit = function(self)
-		for si,s in ipairs(shots) do
-			if s.is_alien then
-				if coll(s, ship) then
-					clear(shots)
-					self:kill()
-				end
-			else
-				for ai,a in ipairs(aliens) do
-					if not s.is_alien and a.alive and coll(a,s) then
-						table.remove(shots,si)
-						self:hit(a)
+		if #shots > 0 then
+			for si,s in ipairs(shots) do
+				if s.is_alien then
+					if coll(s, ship) then
+						clear(shots)
+						self:kill()
+					end
+				else
+					for ai,a in ipairs(aliens) do
+						if not s.is_alien and a.alive and coll(a,s) then
+							if #shots > 0 then table.remove(shots,si) end
+							self:hit(a)
+						end
 					end
 				end
 			end
 		end
 	end,
 	init = function(self)
+		self.bonus = 0
 		self.lifes = 5
-		clear(aliens)
+		self.sc = 0
 		clear(shots)
-		for row = 1, 6 do
-			for col=1,6 do
-			 table.insert(
-					aliens,
-					self.spawn_alien(
-						self.res_x // 8 * (col + 1/3),
-						row * 10,
-						sprites.aliens[math.random(1,#sprites.aliens)]
-					)
-				)
-			end
-		end
+		aliens:reset()
 	end,
 }
 sprites = {
@@ -176,6 +180,7 @@ shots = {
 	draw = function(self)
 		for i,s in ipairs(self) do
 			if s.y < 0 then
+				game.bonus = 0
 				table.remove(self, i)
 			else
 				spr(self.sprite(s.is_alien),s.x,s.y,0)
@@ -186,6 +191,7 @@ shots = {
 
 aliens = {
 	moves = 6,
+	kills = 0,
 	direction = 1,
 	draw = function(self)
 		for i, a in ipairs(self) do
@@ -223,11 +229,29 @@ aliens = {
 			end
 		end
 	end,
+	reset = function(self)
+		self.moves = 6
+		self.kills = 0
+		clear(self)
+		clear(shots)
+		for row = 1, 6 do
+			for col=1,6 do
+			 table.insert(
+					self,
+					game.spawn_alien(
+						game.res_x // 8 * (col + 1/3),
+						row * 10,
+						sprites.aliens[math.random(1,#sprites.aliens)]
+					)
+				)
+			end
+		end
+	end,
 }
 
 ship = {
 	x = game.res_x // 2,
-	y = game.res_y * 0.9,
+	y = game.res_y * 0.88,
 	move = function(self)
 		local LEFT = 2
 		local RIGHT = 3
@@ -251,10 +275,14 @@ game:init()
 
 function TIC()
 	cls()
-	
+	game:score()
+
 	if not game.started then
 		spr(sprites.ship, game.res_x/2 - 2* game.sprite_w, 80, -1, 4)
-		print("Press Z to start",80, 50, 3)
+		local string="Press any key to start"
+		local width=print(string,0,-6)
+		local orange = 3
+		print(string,(240-width)//2,(136-6)//2, orange)
 		game:press()
 		return
 	end
@@ -272,7 +300,6 @@ function TIC()
 	shots:move()
 	shots:draw()
 	game:check_hit()
-	game:score()
 end
 
 -- <SPRITES>
