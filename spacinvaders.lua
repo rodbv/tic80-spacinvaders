@@ -11,7 +11,7 @@ function coll(o1, o2)
 end
 
 game = {
- started = false,
+ 	started = false,
 	res_x = 240,
 	res_y = 136,
 	sprite_w = 8,
@@ -96,6 +96,7 @@ sprites = {
 	black_hole = {259},
 	boss = {260},
 	laser = {263,264},
+	alien_shot = 262,
 }
 
 sounds = {
@@ -130,17 +131,17 @@ sounds = {
 shots = {
 	move = function(self)
 		for _,s in ipairs(self) do
-			local offset = s.is_alien and -1 or 1
-			s.y = s.y - offset
+			local offset = s.is_alien and 1 or -2
+			s.y = s.y + offset
 		end
 	end,
-	sprite = function(self, is_alien)
-		if is_alien then return 262 end
+	sprite = function(is_alien)
+		if is_alien then return sprites.alien_shot end
 
-		if game.tics%6<3 then 
-			return sprites.laser[1]
+		if game.tics%10<5 then
+			return 263
 		else
-			return sprites.laser[2]
+			return 264
 		end
 	end,
 	draw = function(self)
@@ -148,7 +149,7 @@ shots = {
 			if s.y < 0 then
 				table.remove(self, i)
 			else
-				spr(s.is_alien and 262 or 263,s.x,s.y,0)
+				spr(self.sprite(s.is_alien),s.x,s.y,0)
 			end
 		end
 	end,
@@ -168,11 +169,11 @@ aliens = {
 		for _, a in ipairs(self) do
 				if 
 					a.alive and 
-					math.random(1,1000) == 666 
+					math.random(1,1000) == 666
 				then
 					table.insert(
-						shots, 
-						{ 
+						shots,
+						{
 							x = a.x,
 							y = a.y + game.sprite_w,
 							is_alien = true 
@@ -221,6 +222,7 @@ game:init()
 
 function TIC()
 	cls()
+	
 	if not game.started then
 		spr(sprites.ship, game.res_x/2 - 2* game.sprite_w, 80, -1, 4)
 		print("Press Z to start",80, 50, 3)
@@ -228,14 +230,14 @@ function TIC()
 	 return
 	end
 
- sounds:toggle()
- sounds:draw()
+	sounds:toggle()
+	sounds:draw()
 	game:tic()
 	ship:move()
 	ship:draw()
 	aliens:move()
-	aliens:draw()
 	aliens:fire()
+	aliens:draw()
 	game:shoot()
 	shots:move()
 	shots:draw()
