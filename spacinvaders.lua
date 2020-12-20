@@ -11,15 +11,18 @@ function coll(o1, o2)
 end
 
 game = {
+	points = 0,
  	started = false,
 	res_x = 240,
+	lifes = 5,
 	res_y = 136,
 	sprite_w = 8,
 	tics = 0,
 	last_shot = math.huge,
 	press = function(self)
 		if btn(4) then
-		  self.started = true
+			self.started = true
+			self:init()
 		end
 	end,
 	spawn_alien = function(ax, ay, asprite)
@@ -32,6 +35,11 @@ game = {
 	end,
 	tic = function(self)
 		self.tics = self.tics + 1		
+	end,
+	status = function(self)
+		for life = 0, self.lifes -1 do
+			spr(sprites.life, life * game.sprite_w, self.res_y - 8)
+		end
 	end,
 	shoot = function(self)
 		game.last_shot = game.last_shot + 1
@@ -55,27 +63,41 @@ game = {
 			)
 		end
 	end,
+	kill = function(self)
+		self.lifes = self.lifes - 1
+		local dur = self.lifes == 0 and 60 or 180
+		sounds:play('kill', dur)
+		self.started = self.lifes > 0
+	end,
+	hit = function(self, a)
+		sounds:play('hit')
+		a.alive = false
+		self.points = self.points + 10
+	end,
+	score = function(self)
+		print('Score: '..tostring(self.points), self.res_x - 40, 1, 10, 1, 1, true)
+	end,
 	check_hit = function(self)
 		for si,s in ipairs(shots) do
 			if s.is_alien then
 				if coll(s, ship) then
-					sounds:play('hit')
-					sounds:play('hit')
-					sounds:play('hit')
-					print('HIT!!!!')
+					clear(shots)
+					self:kill()
 				end
 			else
 				for ai,a in ipairs(aliens) do
 					if not s.is_alien and a.alive and coll(a,s) then
-						a.alive = false
 						table.remove(shots,si)
-						sounds:play('hit')
+						self:hit(a)
 					end
 				end
 			end
 		end
 	end,
 	init = function(self)
+		self.lifes = 5
+		clear(aliens)
+		clear(shots)
 		for row = 1, 6 do
 			for col=1,6 do
 			 table.insert(
@@ -97,16 +119,21 @@ sprites = {
 	boss = {260},
 	laser = {263,264},
 	alien_shot = 262,
+	life = 288,
 }
 
+clear = function(t)
+	local count = #t
+	for i=0, count do t[i]=nil end
+end
 sounds = {
-	enabled = false,
+	enabled = true,
   toggle = function(self)
     if btnp(5) then
       self.enabled = not self.enabled
     end
 	end,
-	play = function(self,s)
+	play = function(self,s, dur)
 		if not self.enabled then return end
 		if s == 'shoot' then
 				sfx(0,'D-4',20,1,10)
@@ -114,6 +141,8 @@ sounds = {
 				sfx(4,1,2)
 		elseif s == 'hit' then
 				sfx(0,'D-5',20,1,10)
+		elseif s == 'kill' then
+				sfx(4, -1, dur or 60)
 		end
   end,
   draw = function(self)
@@ -227,12 +256,13 @@ function TIC()
 		spr(sprites.ship, game.res_x/2 - 2* game.sprite_w, 80, -1, 4)
 		print("Press Z to start",80, 50, 3)
 		game:press()
-	 return
+		return
 	end
-
+	
+	game:tic()
 	sounds:toggle()
 	sounds:draw()
-	game:tic()
+	game:status()
 	ship:move()
 	ship:draw()
 	aliens:move()
@@ -242,6 +272,7 @@ function TIC()
 	shots:move()
 	shots:draw()
 	game:check_hit()
+	game:score()
 end
 
 -- <SPRITES>
@@ -254,6 +285,7 @@ end
 -- 006:0000000000000000000000000000000000050000000500000005000000050000
 -- 007:0000200000002000000020000000200000002000000020000000200000002000
 -- 008:0000400000004000000040000000400000004000000040000000400000004000
+-- 032:000000000000000000000000000000000000b0000000a000000aaa0000aaaaa0
 -- 112:00000000000b0c0000bb00c0bbbbc0c0aabbc0c000ab00c0000a0c0000000000
 -- 113:00000000000d000000dd0000ddddf000eeddf00000ed0000000e000000000000
 -- </SPRITES>
@@ -268,6 +300,7 @@ end
 -- 000:010001008100810081009100010091009100a100a100a100a100b100b100b1000100b100b100b100e100b10071007100710051004100010001000100050000000000
 -- 002:000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000034000000000
 -- 003:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000050000000000
+-- 004:00e000f000e000d000d000c000e000e000f000f000f000b000b000c000b000b000a000a000a000a000b000b00050005000f000f000e000d000c000c0002000000000
 -- </SFX>
 
 -- <PALETTE>
