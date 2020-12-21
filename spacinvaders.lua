@@ -81,6 +81,8 @@ game = {
 		if self.sc > self.hisc then
 			self.hisc = self.sc
 		end
+	end,
+	lv_done = function(self)
 		if aliens.kills == 36 then
 			clear(shots)
 			self.lv = self.lv + 1
@@ -251,8 +253,8 @@ aliens = {
 						sprites.aliens[math.random(1,#sprites.aliens)]
 					)
 				)
-			end
-		end
+			end -- col
+		end -- row
 	end,
 }
 
@@ -307,6 +309,7 @@ function TIC()
 	shots:move()
 	shots:draw()
 	game:check_hit()
+	game:lv_done()
 end
 
 -- <SPRITES>
