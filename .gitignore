@@ -1,2 +1,3 @@
 *.tic
 .vscode
+.local

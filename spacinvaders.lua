@@ -12,6 +12,7 @@ end
 
 game = {
 	sc = 0,
+	lv = 1,
 	hisc = 0,
 	bonus = 0, -- how many aliens were hit in sequence
  	started = false,
@@ -81,12 +82,15 @@ game = {
 			self.hisc = self.sc
 		end
 		if aliens.kills == 36 then
+			clear(shots)
+			self.lv = self.lv + 1
 			aliens:reset()
 		end
 	end,
 	score = function(self)
 		local y = game.res_y - 5
-		print('Score '..tostring(self.sc), self.res_x - 80, y, 10, 1, 1, true)
+		print('Lv '..tostring(self.lv), self.res_x - 130, y, 10, 1, 1, true)
+		print('Sc '..tostring(self.sc), self.res_x - 80, y, 10, 1, 1, true)
 		print('Hi '..tostring(self.hisc), self.res_x - 30, y, 11, 1, 1, true)
 	end,
 	check_hit = function(self)
@@ -112,7 +116,9 @@ game = {
 		self.bonus = 0
 		self.lifes = 5
 		self.sc = 0
+		self.lv = 1
 		clear(shots)
+		clear(aliens)
 		aliens:reset()
 	end,
 }
@@ -164,7 +170,7 @@ sounds = {
 shots = {
 	move = function(self)
 		for _,s in ipairs(self) do
-			local offset = s.is_alien and 1 or -2
+			local offset = s.is_alien and 1 or -1
 			s.y = s.y + offset
 		end
 	end,
@@ -202,9 +208,10 @@ aliens = {
 	end,
 	fire = function(self)
 		for _, a in ipairs(self) do
+				local chance = math.random(1,1000)
 				if 
 					a.alive and 
-					math.random(1,1000) == 666
+					(chance <= game.lv) 
 				then
 					table.insert(
 						shots,
@@ -230,10 +237,10 @@ aliens = {
 		end
 	end,
 	reset = function(self)
+		clear(shots)
+		clear(aliens)
 		self.moves = 6
 		self.kills = 0
-		clear(self)
-		clear(shots)
 		for row = 1, 6 do
 			for col=1,6 do
 			 table.insert(
