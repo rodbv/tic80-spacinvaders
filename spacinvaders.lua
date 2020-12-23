@@ -23,7 +23,7 @@ game = {
 	tics = 0,
 	last_shot = math.huge,
 	press = function(self)
-		if btnp() > 0 then
+		if btnp(7) then
 			self.started = true
 			self:init()
 		end
@@ -210,17 +210,17 @@ aliens = {
 	end,
 	fire = function(self)
 		for _, a in ipairs(self) do
-				local chance = math.random(1,1000)
+				local chance = math.random(1,300 - (game.lv * 10))
 				if 
 					a.alive and 
-					(chance <= game.lv) 
+					(chance == 1) 
 				then
 					table.insert(
 						shots,
 						{
 							x = a.x,
 							y = a.y + game.sprite_w,
-							is_alien = true 
+							is_alien = true
 						})
 				end
 		end
@@ -288,7 +288,7 @@ function TIC()
 
 	if not game.started then
 		spr(sprites.ship, game.res_x/2 - 2* game.sprite_w, 80, -1, 4)
-		local string="Press any key to start"
+		local string="Press S to start"
 		local width=print(string,0,-6)
 		local orange = 3
 		print(string,(240-width)//2,(136-6)//2, orange)
