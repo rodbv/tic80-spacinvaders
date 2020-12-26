@@ -22,7 +22,12 @@ game = {
 	sprite_w = 8,
 	tics = 0,
 	last_shot = math.huge,
-	press = function(self)
+ press = function(self)
+  spr(sprites.ship, game.res_x/2 - 2* game.sprite_w, 80, -1, 4)
+		local string="Press S to start"
+		local width=print(string,0,-6)
+		local orange = 3
+		print(string,(240-width)//2,(136-6)//2, orange)
 		if btnp(7) then
 			self.started = true
 			self:init()
@@ -31,8 +36,8 @@ game = {
 	spawn_alien = function(ax, ay, asprite)
 		return {
 			x = ax,
-			y = ay,
-			alive = true,
+   y = ay,
+   alive = true,
 			sprite = asprite
 		}
 	end,
@@ -83,8 +88,7 @@ game = {
 		end
 	end,
 	lv_done = function(self)
-		if aliens.kills == 36 then
-			clear(shots)
+		if aliens.kills == #aliens then
 			self.lv = self.lv + 1
 			aliens:reset()
 		end
@@ -210,12 +214,14 @@ aliens = {
 	end,
 	fire = function(self)
 		for _, a in ipairs(self) do
-				local chance = math.random(1,300 - (game.lv * 10))
+				local chance = math.max(
+      100, 
+      math.random(1,1000 - (game.lv * game.lv * 20))
+     )
 				if 
 					a.alive and 
 					(chance == 1) 
-				then
-					table.insert(
+				then					table.insert(
 						shots,
 						{
 							x = a.x,
@@ -287,12 +293,7 @@ function TIC()
 	game:score()
 
 	if not game.started then
-		spr(sprites.ship, game.res_x/2 - 2* game.sprite_w, 80, -1, 4)
-		local string="Press S to start"
-		local width=print(string,0,-6)
-		local orange = 3
-		print(string,(240-width)//2,(136-6)//2, orange)
-		game:press()
+	game:press()
 		return
 	end
 	
